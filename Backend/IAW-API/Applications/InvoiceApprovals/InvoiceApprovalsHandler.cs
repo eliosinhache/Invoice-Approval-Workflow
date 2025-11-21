@@ -13,6 +13,11 @@ namespace IAW_API.Applications.InvoiceApprovals
 
             var requiredApprovers = ApprovalsListByAmount(request.Amount);
 
+            if (request.IsPreferredVendor)
+            {
+                requiredApprovers.RemoveAt(0);
+            }
+
             result.Success(new InvoiceApprovalResponse
             {
                 RequiredApprovers = requiredApprovers
