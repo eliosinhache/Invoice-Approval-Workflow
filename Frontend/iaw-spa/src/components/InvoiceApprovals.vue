@@ -24,7 +24,6 @@
                                 v-model="formData.isPreferredVendor"
                                 color="primary"
                                 label="Is Preferred Vendor"
-                                value="primary"
                                 hide-details
                             ></v-checkbox>
                         </v-col>
@@ -32,7 +31,15 @@
                     </v-row>
                     </v-form>
                 </v-card-text>
-                
+                <v-card-subtitle v-if="canShowList"  class="ma-4">
+                    <h4>Approvals List:</h4>
+                    <v-chip v-if="approvals.length > 0" v-for="approval in approvals" class="ma-2" variant="elevated" color="primary">
+                        {{ approval }}
+                    </v-chip>
+                    <v-chip v-else class="ma-2" variant="outlined" color="grey">
+                        No approvals required.
+                    </v-chip>
+                </v-card-subtitle>
                 <v-card-actions class="ma-4" >
                     <v-btn text="Reset" :loading="loading" variant="tonal" @click="reset"></v-btn>
 
@@ -46,6 +53,7 @@
     </v-container>
 </template>
 <script setup lang="ts">
+import axios from 'axios';
 import { ref } from 'vue';
 
 const formData = ref({
@@ -58,6 +66,8 @@ const amountRules = ref([
 ]); 
 const valid = ref(false);
 const loading = ref(false);
+const approvals = ref<string[]>([]);
+const canShowList = ref(false);
 const form = ref();
 
 async function send() {
@@ -65,12 +75,29 @@ async function send() {
     valid.value = result.valid;
     if (!valid.value) return;
     
-    loading.value = true;
-    console.log('send amount:');
-    loading.value = false;
+    try {
+        loading.value = true;
+        const resultData = await axios.post('https://localhost:5000/api/invoices/determine-approvers', formData.value);
+        if (resultData.data.isSuccess){
+            canShowList.value = true;
+            approvals.value = resultData.data.data.requiredApprovers;
+        } else {
+            console.error('Error creating post:', resultData.data.message);
+        }
+    } catch (error) {
+        console.error('Error sending form data:', error);
+    } finally {
+        loading.value = false;
+    }
 }
 
 function reset() {
+    approvals.value = [];
+    canShowList.value = false;
     form.value.reset();
+    formData.value = {
+        amount: null,
+        isPreferredVendor: false
+    };
 }
 </script>
