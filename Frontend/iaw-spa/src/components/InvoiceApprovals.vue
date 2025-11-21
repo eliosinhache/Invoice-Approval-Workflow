@@ -32,13 +32,32 @@
                     </v-form>
                 </v-card-text>
                 <v-card-subtitle v-if="canShowList"  class="ma-4">
-                    <h4>Approvals List:</h4>
-                    <v-chip v-if="approvals.length > 0" v-for="approval in approvals" class="ma-2" variant="elevated" color="primary">
-                        {{ approval }}
-                    </v-chip>
-                    <v-chip v-else class="ma-2" variant="outlined" color="grey">
-                        No approvals required.
-                    </v-chip>
+                    <v-row>
+                        <v-col cols="12" md="6">
+                            <h4>Required approvers:</h4>
+                            <v-chip v-if="approvals.length > 0" v-for="approval in approvals" class="ma-2" variant="elevated" color="primary">
+                                {{ approval }}
+                            </v-chip>
+                            <v-chip v-else class="ma-2" variant="outlined" color="grey">
+                                No approvals required.
+                            </v-chip>
+                        </v-col>
+                    </v-row>
+                    <v-row>                        
+                        <v-treeview
+                            v-model:opened="open"
+                            :items="items"
+                            density="compact"
+                            item-value="title"
+                            activatable
+                            open-on-click
+                        >
+                            <template v-slot:prepend="{ item, isOpen }">
+                            <v-icon  :icon="isOpen ? 'mdi-account-arrow-up' : 'mdi-account'"></v-icon>
+
+                            </template>
+                        </v-treeview>
+                    </v-row>
                 </v-card-subtitle>
                 <v-card-actions class="ma-4" >
                     <v-btn text="Reset" :loading="loading" variant="tonal" @click="reset"></v-btn>
@@ -69,6 +88,46 @@ const loading = ref(false);
 const approvals = ref<string[]>([]);
 const canShowList = ref(false);
 const form = ref();
+const open = ref<string[]>([]);
+const items = ref([
+    {
+        title: 'Amount under $1,000 and Not Preferred Vendor',
+        children: [
+            { title: 'Manager', file: 'pdf' }
+        ],
+    },
+    {
+        title: 'Amount under $1,000 and Preferred Vendor',
+        children: [
+            { title: 'No approvals required', file: 'png' }
+        ],
+    },
+    {
+        title: 'Amount $1,000 - $9,999 and Not Preferred Vendor',
+        children: [
+            { title: '(Manager + Director)', file: 'png' }
+        ],
+    },
+    {
+        title: 'Amount $1,000 - $9,999 and Preferred Vendor',
+        children: [
+            { title: '(Director)', file: 'png' }
+        ],
+    },
+    {
+        title: 'Amount $10,000 and above and Not Preferred Vendor',
+        children: [
+            { title: '(Manager + Director + VP)', file: 'pdf' }
+        ],
+    },
+    {
+        title: 'Amount $10,000 and above and Preferred Vendor',
+        children: [
+            { title: '(Director + VP)', file: 'pdf' }
+        ],
+    },
+]);
+
 
 async function send() {
     const result = await form.value.validate()
