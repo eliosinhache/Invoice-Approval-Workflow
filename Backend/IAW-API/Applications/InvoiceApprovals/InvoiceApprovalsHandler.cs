@@ -1,5 +1,6 @@
-﻿using IAW_API.Models.Responses;
-using IAW_API.Models.Responses.Common;
+﻿using IAW_API.Commons;
+using IAW_API.Models;
+using IAW_API.Models.Responses;
 using MediatR;
 
 namespace IAW_API.Applications.InvoiceApprovals
@@ -9,11 +10,8 @@ namespace IAW_API.Applications.InvoiceApprovals
         public async Task<Result<InvoiceApprovalResponse>> Handle(InvoiceApprovalCommand request, CancellationToken cancellationToken)
         {
             var result = new Result<InvoiceApprovalResponse>();
-            // Placeholder logic for determining required approvers
-            var requiredApprovers = new List<string>
-            {
-                "GeneralManager",
-            };
+
+            var requiredApprovers = ApprovalsListByAmount(request.Amount);
 
             result.Success(new InvoiceApprovalResponse
             {
@@ -21,6 +19,24 @@ namespace IAW_API.Applications.InvoiceApprovals
             });
 
             return result;
+        }
+
+        private List<string> ApprovalsListByAmount(decimal amount)
+        {
+            int amountOfAppovers = 0;
+            switch (amount)
+            {
+                case < 1000:
+                    amountOfAppovers = 1;
+                    break;
+                case <= 9999:
+                    amountOfAppovers = 2;
+                    break;
+                default:
+                    amountOfAppovers = 3;
+                    break;
+            }
+            return Roles.AvailableRoles.Take(amountOfAppovers).ToList();
         }
     }
 }

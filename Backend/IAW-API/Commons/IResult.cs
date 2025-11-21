@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace IAW_API.Models.Responses.Common
+namespace IAW_API.Commons
 {
     public interface IResult
     {

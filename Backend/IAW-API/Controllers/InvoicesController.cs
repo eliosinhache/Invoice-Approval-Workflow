@@ -6,16 +6,16 @@ namespace IAW_API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class InvoiceApprovalController : Controller
+    public class InvoicesController : Controller
     {
         private ISender _sender;
-        public InvoiceApprovalController(ISender sender)
+        public InvoicesController(ISender sender)
         {
             _sender = sender;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> InvoiceApproval([FromBody] InvoiceApprovalCommand command)
+        [HttpPost("determine-approvers")]
+        public async Task<IActionResult> InvoiceApprovals([FromBody] InvoiceApprovalCommand command)
         {
             var result = await _sender.Send(command);
             return result.IsSuccess ? Ok(result) : BadRequest(result);

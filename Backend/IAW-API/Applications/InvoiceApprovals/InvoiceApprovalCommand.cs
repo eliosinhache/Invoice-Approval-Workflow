@@ -1,5 +1,5 @@
-﻿using IAW_API.Models.Responses;
-using IAW_API.Models.Responses.Common;
+﻿using IAW_API.Commons;
+using IAW_API.Models.Responses;
 using MediatR;
 
 namespace IAW_API.Applications.InvoiceApprovals
