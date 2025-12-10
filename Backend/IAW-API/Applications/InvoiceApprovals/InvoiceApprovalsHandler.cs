@@ -2,46 +2,45 @@
 using IAW_API.Models;
 using IAW_API.Models.Responses;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace IAW_API.Applications.InvoiceApprovals
 {
     public class InvoiceApprovalsHandler : IRequestHandler<InvoiceApprovalCommand, Result<InvoiceApprovalResponse>>
     {
-        public async Task<Result<InvoiceApprovalResponse>> Handle(InvoiceApprovalCommand request, CancellationToken cancellationToken)
+        private readonly IApprovalPolicy _approvalPolicy;
+        private readonly ILogger<InvoiceApprovalsHandler> _logger;
+
+        public InvoiceApprovalsHandler(IApprovalPolicy approvalPolicy, ILogger<InvoiceApprovalsHandler> logger)
         {
+            _approvalPolicy = approvalPolicy;
+            _logger = logger;
+        }
+
+        public Task<Result<InvoiceApprovalResponse>> Handle(InvoiceApprovalCommand request, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var result = new Result<InvoiceApprovalResponse>();
 
-            var requiredApprovers = ApprovalsListByAmount(request.Amount);
-
-            if (request.IsPreferredVendor)
+            if (request.Amount < 0)
             {
-                requiredApprovers.RemoveAt(0);
+                _logger.LogWarning("Invoice amount is negative: {Amount}", request.Amount);
+                result.Success(new InvoiceApprovalResponse { RequiredApprovers = new List<string>() });
+                return Task.FromResult(result);
             }
+
+            var requiredApprovers = _approvalPolicy.GetRequiredApprovers(request.Amount, request.IsPreferredVendor).ToList();
 
             result.Success(new InvoiceApprovalResponse
             {
                 RequiredApprovers = requiredApprovers
             });
 
-            return result;
-        }
+            _logger.LogInformation("Determined {Count} approvers for amount {Amount} (preferredVendor: {Preferred})",
+                requiredApprovers.Count, request.Amount, request.IsPreferredVendor);
 
-        private List<string> ApprovalsListByAmount(decimal amount)
-        {
-            int amountOfAppovers = 0;
-            switch (amount)
-            {
-                case < 1000:
-                    amountOfAppovers = 1;
-                    break;
-                case <= 9999:
-                    amountOfAppovers = 2;
-                    break;
-                default:
-                    amountOfAppovers = 3;
-                    break;
-            }
-            return Roles.AvailableRoles.Take(amountOfAppovers).ToList();
+            return Task.FromResult(result);
         }
     }
 }
